@@ -10,21 +10,7 @@ use App\Chat;
 use Auth;
 
 class FCMController extends Controller
-{
-    public function index(Request $req) {
-        $fcm_token = $req->fcm_token;
-        $user_id = $req->user_id;
-
-        $user = User::findOrFail($user_id);
-        $user->fcm_token = $fcm_token;
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'user token updated successfully'
-        ]);
-    }
-    
+{   
     public function getRooms() {
         $response = [
             'success' => true,
@@ -41,16 +27,23 @@ class FCMController extends Controller
         return response()->json($response);
     }
 
+    public function checkRoom(Request $req) {
+        $chat = Chat::where('sender_id', $req->senderId)->where('recipient_id', $req->userId)->first();
+        $isChat = is_null($chat) ? 0 : 1;
+        $roomId = is_null($chat) ? null : $chat->room_id;
+        $response = [
+            'success' => true,
+            'isChat' => $isChat,
+            'roomId' => $roomId,
+        ];
+        return response()->json($response);
+    }
+
     public function saveRoom(Request $req) {
         $room = new Room();
-        $room->name = $req->roomId;
+        $room->room_name = $req->roomId;
         $room->save();
 
-        // $chat = new Chat();
-        // $chat->room_id = $room->id;
-        // $chat->sender_id = $req->senderId;
-        // $chat->recipient_id = $req->recipientId;
-        // $chat->save();
         $chats = [
             ['room_id' => $room->id, 'sender_id' => $req->senderId, 'recipient_id' => $req->recipientId],
             ['room_id' => $room->id, 'sender_id' => $req->recipientId, 'recipient_id' => $req->senderId],

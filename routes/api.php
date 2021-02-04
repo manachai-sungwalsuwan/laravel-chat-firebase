@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('/save-token', 'FCMController@index');
 Route::get('/rooms', 'FCMController@getRooms');
 Route::post('/get-room', 'FCMController@getRoom');
+Route::post('/check-room', 'FCMController@checkRoom');
 Route::post('/save-room', 'FCMController@saveRoom');

@@ -31,70 +31,57 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">{{ __('Dashboard') }}</div>
-
+                <div class="card-header">ผู้ใช้งานทั้งหมด</div>
                 <div class="card-body">
-                    @if (session('status'))
-                    <div class="alert alert-success" role="alert">
-                        {{ session('status') }}
-                    </div>
-                    @endif
-
-                    {{ __('You are logged in!') }}
-
-                    <a href="javascript:void(0);" onclick="createUser();">create user in firebase</a>
-                </div>
-            </div>
-            <br>
-            <div class="card">
-                <div class="card-header">Users</div>
-                <div class="card-body">
-                    @foreach ($users as $user)
+                    @forelse ($users as $user)
                     <div class="alert alert-success" role="alert">
                         <a href="javascript:void(0);" onclick="createChat({{$user->id}});">
                             {{ $user->name }} (เริ่มสนทนา)
                         </a>
                     </div>
-                    @endforeach
+                    @empty
+                    <p class="text-center">ยังไม่มีผู้ใช้งาน</p>
+                    @endforelse
                 </div>
             </div>
             <br>
             <div class="row">
                 <div class="col-6">
                     <div class="card">
-                        <div class="card-header">Chats</div>
+                        <div class="card-header">ผู้สนทนา</div>
                         <div class="card-body">
                             @forelse ($chats as $chat)
                             <div class="alert alert-success" role="alert">
                                 <a href="javascript:void(0);" onclick="startChat({{$chat->room_id}});">
-                                    {{ $chat->user->name }} (สนทนา) ({{ $chat->room->name}})
+                                    {{ $chat->user->name }} ({{ $chat->room->room_name}})
                                 </a>
                             </div>
                             @empty
-                                <p class="text-center">ยังไม่มีผู้สทนา</p>
+                                <p class="text-center">ยังไม่มีผู้สนทนา</p>
                             @endforelse
                         </div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="card">
-                        <div class="card-header" id="room_text">Room</div>
+                        <div class="card-header" id="room_text">ห้องสนทนา</div>
                         <div class="card-body">
-                            <div class="chat-container">
-                                {{-- <p class="chat chat-left">This is chat left.</p>
-                                <p class="chat chat-right">This is chat right.</p>
-                                <p class="chat chat-left">This is chat left.</p>
-                                <p class="chat chat-right">This is chat right.</p> --}}
-                            </div>
+                            <div class="chat-container"></div>
                         </div>
                         <div class="card-footer">
                             <div class="row">
-                                <div class="col-md-10">
+                                <div class="col-md-1 text-center">
+                                    <i class="fa fa-image fa-2x" id="open-file"></i>
+                                    <input type="file" id="file" style="display: none;" onchange="uploadFiles(this);">
+                                </div>
+                                <div class="col-md-9">
                                     <input type="text" id="message" class="form-control" placeholder="Enter message">
                                 </div>
                                 <div class="col-md-2">
                                     <input type="hidden" id="room_id" value="">
-                                    <button type="button" class="btn btn-primary" onclick="sendMessage();">Send</button>
+                                    <input type="hidden" id="auth_id" value="{{Auth::user()->id}}">
+                                    <input type="hidden" id="auth_name" value="{{Auth::user()->name}}">
+                                    <button type="button" class="btn btn-primary" onclick="sendMessage('');">Send</button>
                                 </div>
                             </div>
                         </div>
@@ -108,82 +95,52 @@
 
 @section('script')
 <script>
-    // const messaging = firebase.messaging();
-    // // Add the public key generated from the console here.
-    // messaging.getToken({vapidKey: "BDgeD4Ib5ERyIvr3tOQwwBMsrjXOrZRJy_QqHF29_dw5oytjRZMoL4koBCz8CpDrfyCVYs1shlAbntrwaA_F3LM"});
-
-    // function sendTokenToServer(fcm_token) {
-    //     const user_id = '{{Auth::user()->id}}';
-    //     axios.post('/api/save-token', {
-    //         fcm_token, user_id
-    //     })
-    //     .then(function (res) {
-    //         console.log(res);
-    //     })
-    //     .catch(function (error) {
-    //         console.log(error);
-    //     });   
-    // }
-
-    // messaging.getToken().then((currentToken) => {
-    //     if (currentToken) {
-    //         sendTokenToServer(currentToken)
-    //     } else {
-    //         console.log('Yoy should alllow notification!');
-    //     }
-    // }).catch((err) => {
-    //     console.log('An error occurred while retrieving token. ', err);
-    // });
-
+$(document).ready(function(e) {   
+    $("#open-file").click(function () {
+        $("#file").trigger('click');
+    });
+});
+</script>
+<script>
     const database = firebase.firestore();
-
-    const usersCollection = database.collection('users');
-
+    const storage = firebase.storage();
     const chatsCollection = database.collection('chats');
 
-    function createUser() {
-        const user_id = '{{Auth::user()->id}}';
-
-        // usersCollection
-        // .doc(user_id)
-        // .set({
-        //     id: user_id,
-        //     first_name: '{{Auth::user()->name}}'
-        // })
-        // .then(() => {console.log('Insert data success');})
-        // .catch(error => {console.log(error);});
-        
-        usersCollection
-        .add({
-            id: user_id,
-            first_name: '{{Auth::user()->name}}'
-        })
-        .then(() => {console.log('Insert data success');})
-        .catch(error => {console.log(error);});
-    }
-
     function createChat(userId) {
-        chatsCollection
-        .add({})
-        .then(function(docRef) {
-            console.log("Document written with ID: ", docRef.id);
-            $("#room_text").html("Room " + docRef.id);
-            $("#room_id").val(docRef.id);
-            createRoom(docRef.id, userId);
+        let senderId = $("#auth_id").val();
+        axios.post('/api/check-room', {
+            senderId, userId
         })
-        .catch(function(error) {
-            console.error("Error adding document: ", error);
-        }); 
+        .then(function (res) {
+            // exits chat
+            if (res.data.isChat > 0) {
+                startChat(res.data.roomId);
+            } else {
+                chatsCollection
+                .add({})
+                .then(function(docRef) {
+                    console.log("Document written with ID: ", docRef.id);
+                    createRoom(docRef.id, userId);
+                })
+                .catch(function(error) {
+                    console.error("Error adding document: ", error);
+                });
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
     }
 
     function createRoom(roomId, userId) {
-        let senderId = '{{Auth::user()->id}}';
+        let senderId = $("#auth_id").val();
         let recipientId = userId;
         axios.post('/api/save-room', {
             roomId, senderId, recipientId
         })
         .then(function (res) {
             console.log(res);
+            window.location.reload();
         })
         .catch(function (error) {
             console.log(error);
@@ -195,8 +152,8 @@
             roomId
         })
         .then(function (res) {
-            let docRef = res.data.data.name;
-            $("#room_text").html("Room " + docRef);
+            let docRef = res.data.data.room_name;
+            $("#room_text").html("ห้องสนทนา " + docRef);
             $("#room_id").val(docRef);
 
             getAllMessage(docRef);
@@ -206,11 +163,11 @@
         });
     }
 
-    function sendMessage() {
+    function sendMessage(image) {
         let message = $("#message").val();
         let doc = $("#room_id").val();
-        let userId = '{{Auth::user()->id}}';
-        let userName = '{{Auth::user()->name}}';
+        let userId = $("#auth_id").val();
+        let userName = $("#auth_name").val();
         
         chatsCollection
         .doc(doc)
@@ -220,14 +177,9 @@
             userId: userId,
             userName: userName,
             message: message,
+            image: image,
         })
         .then(function(docRef) {
-            // let ref = docRef.path.split("/");
-            // console.log('collection : ' + ref[0]);
-            // console.log('room : ' + ref[1]);
-            // console.log('message : ' + ref[2]);
-            // console.log('collection : ' + ref[3]);
-            // console.log("Document successfully written!", docRef.id);
             $("#message").val("");
         })
         .catch(function(error) {
@@ -235,55 +187,26 @@
         });
     }
 
-    // get real time
-    // chatsCollection
-    // .doc("zeBfyJoepPpazl7wArAK")
-    // .collection("message")
-    // .orderBy('createdAt', 'desc')
-    // .onSnapshot(function(querySnapshot) {
-    //     $(".chat-container").empty();
-    //     const allMessages = [];
-    //     querySnapshot.forEach(doc => {
-    //         // console.log(doc.id, " => ", doc.data());
-    //         // let id = doc.data().userId;
-    //         // let username = doc.data().userName;
-    //         // let message = doc.data().message;
-    //         // let time = doc.data().createdAt.toDate().toLocaleTimeString('en-US')
-    //         // let isMe = id == '{{Auth::user()->id}}' ? 'chat-right' : 'chat-left';
-    //         // $(".chat-container").append('<p class="chat '+isMe+'">' + username + ' : ' + message + '<br>' + time + '</p>');
-    //         if (doc) allMessages.push(doc.data())
-    //     });
-        
-    //     let reverse = Array.prototype.reverse.call(allMessages);
-        
-    //     if (reverse.length > 0) {
-    //         $.each(reverse, function (index, value) {
-    //             console.log(value)
-    //             let id = value.userId;
-    //             let username = value.userName;
-    //             let message = value.message;
-    //             let time = value.createdAt.toDate().toLocaleTimeString('en-US');
-    //             let isMe = id == '{{Auth::user()->id}}' ? 'chat-right' : 'chat-left';
-    //             $(".chat-container").append('<p class="chat '+isMe+'">' + username + ' : ' + message + '<br>' + time + '</p>');
-    //         });
-    //     } else {
-    //         $(".chat-container").append('<p class="text-center">กรุณาส่งข้อความเริ่มการสนทนา</p');
-    //     }
+    function uploadFiles(element) {
+        const ref = storage.ref();
+        const file = $(element)[0].files[0];
+        const name = new Date() + '-' + file.name;
+        const metadata = {
+            contentType:file.type
+        }
 
-    // }, function(error) {
-    //     console.log(error);
-    // });
+        const task = ref.child('chats/'+name).put(file, metadata);
 
-    // get data
-    // chatsCollection
-    // .doc("3aD5dfeHKQHdMHuRd30l")
-    // .collection("message")
-    // .get()
-    // .then(querySnapshot => {
-    //     querySnapshot.forEach(doc => {
-    //         console.log(doc.id, " => ", doc.data());
-    //     });
-    // });
+        let userId = $("#auth_id").val();
+        let userName = $("#auth_name").val();
+        
+        task
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => {
+            console.log(url)
+            sendMessage(url);
+        });
+    }
 
     function getAllMessage(roomId) {
         chatsCollection
@@ -294,15 +217,7 @@
             $(".chat-container").empty();
             const allMessages = [];
             querySnapshot.forEach(doc => {
-                if (doc) {
-                    allMessages.push(doc.data())
-                    // allMessages.push({
-                    //     'userId': doc.data().userId,
-                    //     'userName': doc.data().userName,
-                    //     'message': doc.data().message,
-                    //     'createdAt': doc.data().createdAt.toDate().toLocaleTimeString('en-US')
-                    // });
-                }
+                if (doc) allMessages.push(doc.data())
             });
             
             let reverse = Array.prototype.reverse.call(allMessages);
@@ -313,9 +228,16 @@
                     let id = value.userId;
                     let username = value.userName;
                     let message = value.message;
+                    let image = value.image;
                     let time = value.createdAt.toDate().toLocaleTimeString('en-US');
                     let isMe = id == '{{Auth::user()->id}}' ? 'chat-right' : 'chat-left';
-                    $(".chat-container").append('<p class="chat '+isMe+'">' + username + ' : ' + message + '<br>' + time + '</p>');
+                    let chat = '';
+                    if (image == "") {
+                        chat = '<p class="chat '+isMe+'">' + username + ' : ' + message + '<br>' + time + '</p>';
+                    } else {
+                        chat = '<p class="chat '+isMe+'"><img src="'+image+'" width="100%" height="150" /><br>' + time + '</p>';
+                    }
+                    $(".chat-container").append(chat);
                 });
             } else {
                 $(".chat-container").append('<p class="text-center">กรุณาส่งข้อความเริ่มการสนทนา</p');
