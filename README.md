@@ -4,9 +4,15 @@
 
 ## Laravel x Firebase Cloud Firestore
 
-ระบบแชท
+- ระบบแชทส่งข้อความและรูปภาพ
 
-## Config
+## Running Migrations
+
+```sh
+php artisan migrate
+```
+
+## Config Firebase
 
 The core Firebase JS SDK is always required and must be listed first
 ```sh
