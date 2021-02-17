@@ -9,11 +9,25 @@
 ## Config
 
 The core Firebase JS SDK is always required and must be listed first
-<p>
+
 <script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-storage.js"></script>
-</p>
+<script>
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    var firebaseConfig = {
+        apiKey: "API_KEY",
+        authDomain: "PROJECT_ID.firebaseapp.com",
+        projectId: "PROJECT_ID",
+        storageBucket: "PROJECT_ID.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "APP_ID",
+        measurementId: "G-MEASUREMENT_ID"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+</script>
 
 ## License
 
