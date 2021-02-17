@@ -9,7 +9,9 @@
 ## Config
 
 The core Firebase JS SDK is always required and must be listed first
-
+```sh
+node app
+```
 <p><script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-app.js"></script></p>
 <p><script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-firestore.js"></script></p>
 <p><script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-storage.js"></script></p>
